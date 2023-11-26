@@ -6,10 +6,10 @@ const Footer = () => {
   return (
     <Box sx={{ pt: 6, textAlign: "center" }}>
       <Typography>
-        © 2023 All rights reserved by{" "}
-        <Link href="https://www.wrappixel.com">
+        © 2023 El Emporio del Vidrio{" "}
+        {/* <Link href="https://www.wrappixel.com">
           Wrappixel.com
-        </Link>{" "}
+        </Link>{" "} */}
       </Typography>
     </Box>
   );

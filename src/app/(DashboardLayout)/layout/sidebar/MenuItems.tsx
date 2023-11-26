@@ -15,7 +15,7 @@ const Menuitems = [
     id: uniqueId(),
     title: "Empresas",
     icon: IconCircleDot,
-    href: "/ui-components/buttons",
+    href: "/ui-components/empresas",
   },
   {
     id: uniqueId(),
@@ -27,7 +27,7 @@ const Menuitems = [
     id: uniqueId(),
     title: "Vidrios",
     icon: IconInfoCircle,
-    href: "/ui-components/alerts",
+    href: "/ui-components/vidrios",
   }
 ];
 
