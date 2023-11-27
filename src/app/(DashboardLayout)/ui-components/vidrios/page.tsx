@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Button,
   Dialog,
@@ -21,9 +21,61 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { red } from '@mui/material/colors';
 import BaseCard from '@/app/(DashboardLayout)/components/shared/BaseCard';
 
+interface Vidrio {
+  activo: boolean;
+  antena: string;
+  codigo: string;
+  id: number;
+  modelo: {
+    title: string;
+  };
+  nombre: string;
+  precio: number;
+  sensor: string;
+  tipoVidrio: string;
+  version: number;
+}
+
 
 const NuevoFormulario = () => {
   const [openModal, setOpenModal] = useState(false);
+  const [rows, setRows] = useState<Vidrio[]>([]);
+
+
+  useEffect(() => {
+    // This function will be called when the component mounts
+    const fetchData = async () => {
+      try {
+        const username = 'sven';
+        const password = 'pass';
+        const authHeader = 'Basic ' + btoa(username + ':' + password);
+
+        const response = await fetch("http://localhost:8080/restful/services/simple.Vidrios/actions/verVidrios/invoke", {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json;profile="urn:org.apache.isis"',
+            'Authorization': authHeader,
+            'accept': 'application/json;profile=urn:org.apache.isis/v2;suppress=all'
+          },
+        });
+
+        const data = await response.json();
+        console.log(data)
+        // Set the obtained data to the 'rows' state
+        setRows(data);
+      } catch (error) {
+        console.error("Error al realizar la solicitud:", error);
+      }
+    };
+
+    // Call the fetchData function
+    fetchData();
+  }, []);
+
+  const handleEditClick = () => {
+    setOpenModal(true);
+  };
+
 
   const handleOpenModal = () => {
     setOpenModal(true);
@@ -65,14 +117,6 @@ const NuevoFormulario = () => {
     // Agrega más empresas según sea necesario
   ];
 
-  // Asumiendo que la propiedad 'empresa' en 'row' contiene el id de la empresa asociada al modelo
-  const rows = [
-    { id: '1', nombre: 'Protector Solar', codigo: 'VPA-2023-001', precio: 15000, tipoVidrio: '1', antena: '1', sensor: '1' },
-    { id: '2', nombre: 'Seguridad Plus', codigo: 'VSP-2023-002', precio: 20000, tipoVidrio: '2', antena: '2', sensor: '2' },
-    { id: '3', nombre: 'Ultra Claro', codigo: 'VUC-2023-003', precio: 18000, tipoVidrio: '3', antena: '1', sensor: '1' },
-    { id: '4', nombre: 'Resistente Impactos', codigo: 'VRI-2023-004', precio: 22000, tipoVidrio: '4', antena: '2', sensor: '2' },
-    // Agrega más modelos según sea necesario
-  ];
 
   return (
     <Grid container spacing={0}>
@@ -179,12 +223,13 @@ const NuevoFormulario = () => {
             <Button onClick={handleCloseModal}>Cancelar</Button>
           </DialogActions>
         </Dialog>
-        <BaseCard title="Empresas">
+        <BaseCard title="Vidrios">
           <Table>
             <TableHead>
               <TableRow>
                 <TableCell>ID</TableCell>
                 <TableCell>Nombre</TableCell>
+                <TableCell>Modelo</TableCell>
                 <TableCell>Codigo</TableCell>
                 <TableCell>Precio</TableCell>
                 <TableCell>Tipo Vidrio</TableCell>
@@ -198,24 +243,110 @@ const NuevoFormulario = () => {
                 <TableRow key={row.id}>
                   <TableCell>{row.id}</TableCell>
                   <TableCell>{row.nombre}</TableCell>
+                  <TableCell>{row.modelo.title}</TableCell>
                   <TableCell>{row.codigo}</TableCell>
                   <TableCell>{row.precio}</TableCell>
+                  <TableCell>{row.tipoVidrio}</TableCell>
+                  <TableCell>{row.antena}</TableCell>
+                  <TableCell>{row.sensor}</TableCell>
                   <TableCell>
-                    {/* Busca la empresa correspondiente al id en 'row.empresa' */}
-                    {tipoVidrio.find((tipoVidrio) => tipoVidrio.id === row.tipoVidrio)?.nombre}
-                  </TableCell>
-                  <TableCell>
-                    {/* Busca la empresa correspondiente al id en 'row.empresa' */}
-                    {antena.find((antena) => antena.id === row.antena)?.nombre}
-                  </TableCell>
-                  <TableCell>
-                    {/* Busca la empresa correspondiente al id en 'row.empresa' */}
-                    {sensor.find((sensor) => sensor.id === row.sensor)?.nombre}
-                  </TableCell>
-                  <TableCell>
-                    <Button startIcon={<EditIcon />} color="primary">
+                  <Button
+                      startIcon={<EditIcon />}
+                      color="primary"
+                      onClick={handleEditClick}
+                    >
                       Editar
-                    </Button>
+                    </Button> <Dialog open={openModal} onClose={handleCloseModal}>
+                      <DialogTitle>Editar Vidrio</DialogTitle>
+                      <DialogContent sx={{ width: '600px', textAlign: 'center' }}>
+                        <Grid item xs={12} lg={12}>
+                          <BaseCard title="Editar Vidrio">
+                            <>
+                              <Stack spacing={3}>
+                                {/* Selector de Modelo */}
+                                <TextField
+                      id="nombre"
+                      label="Nombre"
+                      variant="outlined"
+                      fullWidth
+                    />
+
+                    {/* Campo de Codigo */}
+                    <TextField
+                      id="codigo"
+                      label="Codigo"
+                      variant="outlined"
+                      fullWidth
+                    />
+
+                    {/* Campo de Precio */}
+                    <TextField
+                      id="precio"
+                      label="Precio"
+                      variant="outlined"
+                      fullWidth
+                    />
+
+                    {/* Selector de Tipo Vidrio */}
+                    <FormControl fullWidth>
+                      <InputLabel id="modelo-label">Tipo de Vidrio</InputLabel>
+                      <Select
+                        labelId="tipovidrio-label"
+                        id="tipovidrio"
+                        label="TipoVidrio"
+                      >
+                        {tipoVidrio.map((tipoVidrio) => (
+                          <MenuItem key={tipoVidrio.id} value={tipoVidrio.id}>
+                            {tipoVidrio.nombre}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    {/* Selector de Antena */}
+                    <FormControl fullWidth>
+                      <InputLabel id="modelo-label">Antena</InputLabel>
+                      <Select
+                        labelId="antena-label"
+                        id="antena"
+                        label="Antena"
+                      >
+                        {antena.map((antena) => (
+                          <MenuItem key={antena.id} value={antena.id}>
+                            {antena.nombre}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                      {/* Selector de Sensor */}
+                      <FormControl fullWidth>
+                      <InputLabel id="modelo-label">Sensor</InputLabel>
+                      <Select
+                        labelId="sensor-label"
+                        id="sensor"
+                        label="Sensor"
+                      >
+                        {sensor.map((sensor) => (
+                          <MenuItem key={sensor.id} value={sensor.id}>
+                            {sensor.nombre}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                              </Stack>
+                              <br />
+                              <Button>
+                                Confirmar Edición
+                              </Button>
+                            </>
+                          </BaseCard>
+                        </Grid>
+                      </DialogContent>
+                      <DialogActions>
+                        <Button onClick={handleCloseModal}>Cancelar</Button>
+                      </DialogActions>
+                    </Dialog>
                     <Button startIcon={<DeleteIcon />} color="secondary">
                       Desactivar
                     </Button>

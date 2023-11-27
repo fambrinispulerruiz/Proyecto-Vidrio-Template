@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
 import {
   Typography,
   Box,
@@ -11,6 +11,15 @@ import {
   TableContainer,
 } from "@mui/material";
 import BaseCard from "../shared/DashboardCard";
+
+interface OrdenDeTrabajo {
+  id: number;
+  nombreAsegurado: string;
+  patente: string;
+  estado: string;
+  propio: string;
+  aseguradora: string;
+}
 
 const products = [
   {
@@ -51,7 +60,56 @@ const products = [
   },
 ];
 
+
+
 const ProductPerfomance = () => {
+
+  const [rows, setRows] = useState<OrdenDeTrabajo[]>([]);
+
+  useEffect(() => {
+    // This function will be called when the component mounts
+    const fetchData = async () => {
+      try {
+        const username = 'sven';
+        const password = 'pass';
+        const authHeader = 'Basic ' + btoa(username + ':' + password);
+
+        const response = await fetch("http://localhost:8080/restful/services/simple.OrdenDeTrabajos/actions/verOrdenesDeTrabajo/invoke", {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json;profile="urn:org.apache.isis"',
+            'Authorization': authHeader,
+            'accept': 'application/json;profile=urn:org.apache.isis/v2;suppress=all'
+          },
+        });
+
+        const data = await response.json();
+        console.log(data)
+        // Set the obtained data to the 'rows' state
+        setRows(data);
+      } catch (error) {
+        console.error("Error al realizar la solicitud:", error);
+      }
+    };
+
+    // Call the fetchData function
+    fetchData();
+  }, []);
+
+
+  const getColorForEstado = (estado: string) => {
+    switch (estado) {
+      case 'Sin atender':
+        return "error.main"; // o el color que desees para Sin atender
+      case 'Atendido':
+        return "primary.main"; // o el color que desees para Atendido
+      case 'Finalizado y Entregado':
+        return "success.main"; // o el color que desees para Atendido y Finalizado
+      default:
+        return ''; // o el color por defecto si el estado no coincide con ninguno de los anteriores
+    }
+  };
+
   return (
     <BaseCard title="Historico de Ordenes">
       <TableContainer
@@ -99,28 +157,28 @@ const ProductPerfomance = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {products.map((product) => (
-              <TableRow key={product.name}>
+            {rows.map((row) => (
+              <TableRow key={row.id}>
                 <TableCell>
                   <Typography fontSize="15px" fontWeight={500}>
-                    {product.id}
+                    {row.id}
                   </Typography>
                 </TableCell>
                 <TableCell>
                   <Box display="flex" alignItems="center">
                     <Box>
                       <Typography variant="h6" fontWeight={600}>
-                        {product.name}
+                        {row.nombreAsegurado}
                       </Typography>
                       <Typography color="textSecondary" fontSize="13px">
-                        {product.post}
+                        {row.propio}
                       </Typography>
                     </Box>
                   </Box>
                 </TableCell>
                 <TableCell>
                   <Typography color="textSecondary" variant="h6">
-                    {product.pname}
+                    {row.patente}
                   </Typography>
                 </TableCell>
                 <TableCell>
@@ -128,15 +186,15 @@ const ProductPerfomance = () => {
                     sx={{
                       pl: "4px",
                       pr: "4px",
-                      backgroundColor: product.pbg,
+                      backgroundColor: getColorForEstado(row.estado),
                       color: "#fff",
                     }}
                     size="small"
-                    label={product.priority}
+                    label={row.estado}
                   ></Chip>
                 </TableCell>
                 <TableCell align="right">
-                  <Typography variant="h6">{product.budget}</Typography>
+                  <Typography variant="h6">{row.aseguradora}</Typography>
                 </TableCell>
               </TableRow>
             ))}

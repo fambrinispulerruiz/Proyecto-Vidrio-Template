@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Button,
   Dialog,
@@ -21,9 +21,18 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { red } from '@mui/material/colors';
 import BaseCard from '@/app/(DashboardLayout)/components/shared/BaseCard';
 
+interface Empresa {
+  id: number;
+  name: string;
+  tipoEmpresa: string;
+  telefono: string;
+  correo: string;
+  // Agrega otras propiedades según sea necesario
+}
 
 const NuevoFormulario = () => {
   const [openModal, setOpenModal] = useState(false);
+  const [rows, setRows] = useState<Empresa[]>([]);
 
   const handleOpenModal = () => {
     setOpenModal(true);
@@ -33,28 +42,86 @@ const NuevoFormulario = () => {
     setOpenModal(false);
   };
 
-  const handleExportToPDF = () => {
-    // Implementa la lógica de exportación a PDF
-    // ...
+  useEffect(() => {
+    // This function will be called when the component mounts
+    const fetchData = async () => {
+      try {
+        const username = 'sven';
+        const password = 'pass';
+        const authHeader = 'Basic ' + btoa(username + ':' + password);
 
-    // Ejemplo de apertura de la URL en una nueva ventana/tab
-    // window.open(pdfExportURL, '_blank');
+        const response = await fetch("http://localhost:8080/restful/services/simple.Empresas/actions/VerEmpresas/invoke", {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json;profile="urn:org.apache.isis"',
+            'Authorization': authHeader,
+            'accept': 'application/json;profile=urn:org.apache.isis/v2;suppress=all'
+          },
+        });
+
+        const data = await response.json();
+
+        // Set the obtained data to the 'rows' state
+        setRows(data);
+      } catch (error) {
+        console.error("Error al realizar la solicitud:", error);
+      }
+    };
+
+    // Call the fetchData function
+    fetchData();
+  }, []);
+
+  const handleExportToPDF = async () => {
+    try {
+
+      const username = 'sven';
+      const password = 'pass';
+      const authHeader = 'Basic ' + btoa(username + ':' + password);
+
+      const response = await fetch("http://localhost:8080/restful/services/simple.Reportes/actions/generarReporteEmpresas/invoke", {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json;profile="urn:org.apache.isis"',
+          'Authorization': authHeader,
+          'accept': 'application/json;profile=urn:org.apache.isis/v2;suppress=all'
+          // Puedes agregar otros encabezados si es necesario
+        },
+      });
+
+      const data = await response.json();
+
+      // Muestra la respuesta en la consola
+      console.log(data);
+
+      // Comprueba si la respuesta contiene el enlace al PDF
+      if (data && data.result && data.result.value) {
+        const pdfExportURL = data.result.value;
+
+        // Abre el PDF en una nueva pestaña/tab
+        window.open(pdfExportURL, '_blank');
+      } else {
+        console.error("La respuesta del servidor no contiene el enlace al PDF.");
+      }
+    } catch (error) {
+      console.error("Error al realizar la solicitud:", error);
+    }
   };
 
-  const tipoEmpresa = [
+
+
+  const tipoEmpresaSelect = [
     { id: '1', nombre: 'Cliente' },
     { id: '2', nombre: 'Proveedor' },
     // Agrega más empresas según sea necesario
   ];
 
+
+  const handleEditClick = () => {
+    setOpenModal(true);
+  };
+
   // Asumiendo que la propiedad 'empresa' en 'row' contiene el id de la empresa asociada al modelo
-  const rows = [
-    { id: '1', nombre: 'Mecánica Veloz S.A.', domicilio: 'Av. de los Talleres 123', telefono: '555-1234-5678', correo: 'info@mecanicaveloz.com', tipoEmpresa: '1' },
-    { id: '2', nombre: 'Autotec Reparaciones', domicilio: 'Av. San Martin', telefono: '555-8765-4321', correo: 'contacto@autotecreparaciones.com', tipoEmpresa: '2' },
-    { id: '3', nombre: 'ServiMotor Express', domicilio: 'Julio Argentino Roca 344', telefono: '555-2345-6789', correo: 'servimotorexpress@gmail.com', tipoEmpresa: '1' },
-    { id: '4', nombre: 'Talleres Automotrices Rueda Libre', domicilio: 'Bouquet Roldán 450', telefono: '555-9876-5432', correo: 'talleresruedalibre@hotmail.com', tipoEmpresa: '2' },
-    // Agrega más modelos según sea necesario
-  ];
 
   return (
     <Grid container spacing={0}>
@@ -115,9 +182,9 @@ const NuevoFormulario = () => {
                         id="tipoempresa"
                         label="TipoEmpresa"
                       >
-                        {tipoEmpresa.map((tipoEmpresa) => (
-                          <MenuItem key={tipoEmpresa.id} value={tipoEmpresa.id}>
-                            {tipoEmpresa.nombre}
+                        {tipoEmpresaSelect.map((tipoEmpresaSelect) => (
+                          <MenuItem key={tipoEmpresaSelect.id} value={tipoEmpresaSelect.id}>
+                            {tipoEmpresaSelect.nombre}
                           </MenuItem>
                         ))}
                       </Select>
@@ -143,10 +210,9 @@ const NuevoFormulario = () => {
               <TableRow>
                 <TableCell>ID</TableCell>
                 <TableCell>Nombre</TableCell>
-                <TableCell>Domicilio</TableCell>
+                <TableCell>Tipo de Empresa</TableCell>
                 <TableCell>Telefono</TableCell>
                 <TableCell>Correo</TableCell>
-                <TableCell>Empresa</TableCell>
                 <TableCell>Acciones</TableCell>
               </TableRow>
             </TableHead>
@@ -154,18 +220,86 @@ const NuevoFormulario = () => {
               {rows.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>{row.id}</TableCell>
-                  <TableCell>{row.nombre}</TableCell>
-                  <TableCell>{row.domicilio}</TableCell>
+                  <TableCell>{row.name}</TableCell>
+                  <TableCell>{row.tipoEmpresa}</TableCell>
                   <TableCell>{row.telefono}</TableCell>
                   <TableCell>{row.correo}</TableCell>
                   <TableCell>
-                    {/* Busca la empresa correspondiente al id en 'row.empresa' */}
-                    {tipoEmpresa.find((tipoEmpresa) => tipoEmpresa.id === row.tipoEmpresa)?.nombre}
-                  </TableCell>
-                  <TableCell>
-                    <Button startIcon={<EditIcon />} color="primary">
+                    <Button
+                      startIcon={<EditIcon />}
+                      color="primary"
+                      onClick={handleEditClick}
+                    >
                       Editar
                     </Button>
+                    <Dialog open={openModal} onClose={handleCloseModal}>
+                      <DialogTitle>Editar Empresa</DialogTitle>
+                      <DialogContent sx={{ width: '600px', textAlign: 'center' }}>
+                        <Grid item xs={12} lg={12}>
+                          <BaseCard title="Editar Empresa">
+                            <>
+                              <Stack spacing={3}>
+                                {/* Selector de Empresa */}
+                                <TextField
+                                  id="nombre"
+                                  label="Nombre"
+                                  variant="outlined"
+                                  fullWidth
+                                />
+
+                                {/* Campo de Domicilio */}
+                                <TextField
+                                  id="domicilio"
+                                  label="Domicilio"
+                                  variant="outlined"
+                                  fullWidth
+                                />
+
+                                {/* Campo de Telefono */}
+                                <TextField
+                                  id="telefono"
+                                  label="Telefono"
+                                  variant="outlined"
+                                  fullWidth
+                                />
+
+                                {/* Campo de Correo */}
+                                <TextField
+                                  id="email"
+                                  label="Correo"
+                                  variant="outlined"
+                                  fullWidth
+                                />
+
+                                {/* Selector de Tipo Empresa */}
+                                <FormControl fullWidth>
+                                  <InputLabel id="modelo-label">Tipo de Empresa</InputLabel>
+                                  <Select
+                                    labelId="tipoempresa-label"
+                                    id="tipoempresa"
+                                    label="TipoEmpresa"
+                                  >
+                                    {tipoEmpresaSelect.map((tipoEmpresaSelect) => (
+                                      <MenuItem key={tipoEmpresaSelect.id} value={tipoEmpresaSelect.id}>
+                                        {tipoEmpresaSelect.nombre}
+                                      </MenuItem>
+                                    ))}
+                                  </Select>
+                                </FormControl>
+                              </Stack>
+                              <br />
+                              <Button>
+                                Confirmar Edición
+                              </Button>
+                            </>
+                          </BaseCard>
+                        </Grid>
+                      </DialogContent>
+                      <DialogActions>
+                        <Button onClick={handleCloseModal}>Cancelar</Button>
+                      </DialogActions>
+                    </Dialog>
+
                     <Button startIcon={<DeleteIcon />} color="secondary">
                       Desactivar
                     </Button>
