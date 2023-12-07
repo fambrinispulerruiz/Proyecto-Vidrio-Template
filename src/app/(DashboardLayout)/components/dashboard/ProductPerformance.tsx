@@ -186,7 +186,7 @@ const ProductPerfomance = () => {
                     sx={{
                       pl: "4px",
                       pr: "4px",
-                      backgroundColor: getColorForEstado(row.estado),
+                      backgroundColor: "success.main",
                       color: "#fff",
                     }}
                     size="small"
