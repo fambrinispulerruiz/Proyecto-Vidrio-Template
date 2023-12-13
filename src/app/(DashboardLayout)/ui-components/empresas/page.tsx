@@ -22,6 +22,7 @@ import { red } from '@mui/material/colors';
 import BaseCard from '@/app/(DashboardLayout)/components/shared/BaseCard';
 import { ChangeEvent } from 'react';
 import { SelectChangeEvent } from '@mui/material/Select';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 
 
@@ -31,6 +32,8 @@ interface Empresa {
   tipoEmpresa: string;
   telefono: string;
   correo: string;
+  domicilio: string;
+  activo: boolean;
 }
 
 const NuevoFormulario = () => {
@@ -38,6 +41,9 @@ const NuevoFormulario = () => {
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState('');
+
 
   const [rows, setRows] = useState<Empresa[]>([]);
 
@@ -114,9 +120,9 @@ const NuevoFormulario = () => {
         const response = await fetch("http://localhost:8080/restful/services/simple.Empresas/actions/VerEmpresas/invoke", {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json;profile="urn:org.apache.isis"',
+            'Content-Type': 'application/json;profile="urn:org.apache.isis/v2"',
             'Authorization': authHeader,
-            'accept': 'application/json;profile=urn:org.apache.isis/v2;suppress=all'
+            'accept': 'application/json;profile=urn:org.apache.isis/v2'
           },
         });
 
@@ -232,7 +238,7 @@ const NuevoFormulario = () => {
       const username = 'sven';
       const password = 'pass';
       const authHeader = 'Basic ' + btoa(username + ':' + password);
-  
+
       const response = await fetch(`http://localhost:8080/restful/objects/vidrios.Empresa/${formData.id}/actions/updateName/invoke`, {
         method: 'PUT',
         headers: {
@@ -248,7 +254,7 @@ const NuevoFormulario = () => {
           tipoEmpresa: { value: formData.tipoEmpresa },
         }),
       });
-  
+
       // Recarga la página después de enviar los datos
       if (response.ok) {
         window.location.reload();
@@ -259,7 +265,40 @@ const NuevoFormulario = () => {
       console.error("Error al realizar la solicitud:", error);
     }
   };
-  
+
+  const handleToggleActive = async (id: number, isActive: boolean) => {
+    try {
+      const actionName = isActive ? 'delete' : 'activar';
+      const actionURL = `http://localhost:8080/restful/objects/vidrios.Empresa/${id}/actions/${actionName}/invoke`;
+      
+      const username = 'sven';
+      const password = 'pass';
+      const authHeader = 'Basic ' + btoa(username + ':' + password);
+
+      const response = await fetch(actionURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json;profile="urn:org.apache.isis"',
+          'Authorization': authHeader,
+          'accept': 'application/json;profile=urn:org.apache.isis/v2;suppress=all'
+        },
+      });
+
+      if (response.ok) {
+        // Actualizar el estado local si es necesario
+        // Mostrar el diálogo con el mensaje
+        setDialogMessage(`Acción "${isActive ? 'Desactivar' : 'Activar'}" completada con éxito`);
+        setDialogOpen(true);
+      } else {
+        setDialogMessage(`Error al realizar la acción: ${response.statusText}`);
+        setDialogOpen(true);
+      }
+    } catch (error) {
+      setDialogMessage('Error al realizar la solicitud');
+      setDialogOpen(true);
+    }
+  };
+
 
   const tipoEmpresaSelect = [
     { id: 'Cliente', nombre: 'Cliente' },
@@ -374,6 +413,8 @@ const NuevoFormulario = () => {
                 <TableCell>Tipo de Empresa</TableCell>
                 <TableCell>Telefono</TableCell>
                 <TableCell>Correo</TableCell>
+                <TableCell>Domicilio</TableCell>
+                <TableCell>Activo</TableCell>
                 <TableCell>Acciones</TableCell>
               </TableRow>
             </TableHead>
@@ -385,6 +426,8 @@ const NuevoFormulario = () => {
                   <TableCell>{row.tipoEmpresa}</TableCell>
                   <TableCell>{row.telefono}</TableCell>
                   <TableCell>{row.correo}</TableCell>
+                  <TableCell>{row.domicilio}</TableCell>
+                  <TableCell>{row.activo ? "Sí" : "No"}</TableCell>
                   <TableCell>
                     <Button
                       startIcon={<EditIcon />}
@@ -411,7 +454,7 @@ const NuevoFormulario = () => {
                                   onChange={handleFormChange}
                                 />
 
-                                {/* <TextField
+                                <TextField
                                   id="domicilio"
                                   name="domicilio"
                                   label="Domicilio"
@@ -419,7 +462,7 @@ const NuevoFormulario = () => {
                                   fullWidth
                                   value={formData.domicilio}
                                   onChange={handleFormChange}
-                                /> */}
+                                />
 
                                 <TextField
                                   id="telefono"
@@ -471,10 +514,20 @@ const NuevoFormulario = () => {
                         <Button onClick={handleCloseEditModal}>Cancelar</Button>
                       </DialogActions>
                     </Dialog>
-
-                    <Button startIcon={<DeleteIcon />} color="secondary">
-                      Desactivar
+                    {/* Botón "Desactivar" o "Activar" */}
+                    <Button
+                      startIcon={row.activo ? <DeleteIcon /> : <CheckCircleOutlineIcon />} // Cambia el ícono según el valor de "activo"
+                      color={row.activo ? "secondary" : "success"} // Cambia el color según el valor de "activo"
+                      onClick={() => handleToggleActive(row.id, row.activo)}
+                    >
+                      {row.activo ? "Desactivar" : "Activar"}
                     </Button>
+                    <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
+                      <DialogContent>
+                        {dialogMessage}
+                        <Button onClick={() => window.location.reload()}>Aceptar</Button>
+                      </DialogContent>
+                    </Dialog>
                   </TableCell>
                 </TableRow>
               ))}

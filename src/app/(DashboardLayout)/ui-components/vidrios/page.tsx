@@ -179,7 +179,7 @@ const NuevoFormulario = () => {
 
                     {/* Selector de Antena */}
                     <FormControl fullWidth>
-                      <InputLabel id="modelo-label">Antena</InputLabel>
+                      <InputLabel id="modelo-label">¿Posee antena para parabrisas?</InputLabel>
                       <Select
                         labelId="antena-label"
                         id="antena"
@@ -195,7 +195,7 @@ const NuevoFormulario = () => {
 
                       {/* Selector de Sensor */}
                       <FormControl fullWidth>
-                      <InputLabel id="modelo-label">Sensor</InputLabel>
+                      <InputLabel id="modelo-label">¿Posee sensor de lluvia?</InputLabel>
                       <Select
                         labelId="sensor-label"
                         id="sensor"
@@ -305,7 +305,7 @@ const NuevoFormulario = () => {
 
                     {/* Selector de Antena */}
                     <FormControl fullWidth>
-                      <InputLabel id="modelo-label">Antena</InputLabel>
+                      <InputLabel id="modelo-label">¿Posee antena para parabrisas?</InputLabel>
                       <Select
                         labelId="antena-label"
                         id="antena"
@@ -321,7 +321,7 @@ const NuevoFormulario = () => {
 
                       {/* Selector de Sensor */}
                       <FormControl fullWidth>
-                      <InputLabel id="modelo-label">Sensor</InputLabel>
+                      <InputLabel id="modelo-label">¿Posee sensor de lluvia?</InputLabel>
                       <Select
                         labelId="sensor-label"
                         id="sensor"
