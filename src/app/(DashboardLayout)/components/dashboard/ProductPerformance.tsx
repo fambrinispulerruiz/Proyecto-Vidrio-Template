@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import {
   Typography,
   Box,
@@ -6,11 +6,13 @@ import {
   TableBody,
   TableCell,
   TableHead,
+  Button,
   TableRow,
   Chip,
   TableContainer,
 } from "@mui/material";
 import BaseCard from "../shared/DashboardCard";
+import EditIcon from '@mui/icons-material/Edit';
 
 interface OrdenDeTrabajo {
   id: number;
@@ -19,6 +21,11 @@ interface OrdenDeTrabajo {
   estado: string;
   propio: string;
   aseguradora: string;
+  fecha: string;
+  telefonoAsegurado: string;
+  vidrio: {
+    title: string;
+  };
 }
 
 const products = [
@@ -129,29 +136,44 @@ const ProductPerfomance = () => {
         >
           <TableHead>
             <TableRow>
-              <TableCell>
+              <TableCell  align="center">
                 <Typography color="textSecondary" variant="h6">
                   Id
                 </Typography>
               </TableCell>
-              <TableCell>
+              <TableCell  align="center">
+                <Typography color="textSecondary" variant="h6">
+                  Vidrio
+                </Typography>
+              </TableCell>
+              <TableCell  align="center">
                 <Typography color="textSecondary" variant="h6">
                   Asegurado
                 </Typography>
               </TableCell>
-              <TableCell>
+              <TableCell  align="center">
+                <Typography color="textSecondary" variant="h6">
+                  Fecha
+                </Typography>
+              </TableCell>
+              <TableCell  align="center">
                 <Typography color="textSecondary" variant="h6">
                   Patente
                 </Typography>
               </TableCell>
-              <TableCell>
+              <TableCell align="center">
                 <Typography color="textSecondary" variant="h6">
                   Estado
                 </Typography>
               </TableCell>
-              <TableCell align="right">
+              <TableCell  align="center">
                 <Typography color="textSecondary" variant="h6">
                   Aseguradora
+                </Typography>
+              </TableCell>
+              <TableCell align="center">
+                <Typography color="textSecondary" variant="h6">
+                  Acciones
                 </Typography>
               </TableCell>
             </TableRow>
@@ -165,21 +187,42 @@ const ProductPerfomance = () => {
                   </Typography>
                 </TableCell>
                 <TableCell>
+                  <Typography fontSize="15px" fontWeight={500}>
+                    {row.vidrio.title}
+                  </Typography>
+                </TableCell>
+                <TableCell>
                   <Box display="flex" alignItems="center">
                     <Box>
                       <Typography variant="h6" fontWeight={600}>
                         {row.nombreAsegurado}
                       </Typography>
                       <Typography color="textSecondary" fontSize="13px">
-                        {row.propio}
+                        {row.telefonoAsegurado}
                       </Typography>
                     </Box>
                   </Box>
                 </TableCell>
                 <TableCell>
                   <Typography color="textSecondary" variant="h6">
-                    {row.patente}
+                    {new Date(row.fecha).toLocaleDateString('es-ES', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                    })}
                   </Typography>
+                </TableCell>
+                <TableCell>
+                  <Box display="flex" alignItems="center">
+                    <Box>
+                      <Typography variant="h6" fontWeight={600}>
+                        {row.patente}
+                      </Typography>
+                      <Typography color="textSecondary" fontSize="13px">
+                        {row.propio}
+                      </Typography>
+                    </Box>
+                  </Box>
                 </TableCell>
                 <TableCell>
                   <Chip
@@ -195,6 +238,15 @@ const ProductPerfomance = () => {
                 </TableCell>
                 <TableCell align="right">
                   <Typography variant="h6">{row.aseguradora}</Typography>
+                </TableCell>
+                <TableCell>
+                    <Button
+                      startIcon={<EditIcon />}
+                      color="secondary"
+                      style={{ margin: '-10px' }}
+                    >
+                      Cambiar Estado
+                    </Button>
                 </TableCell>
               </TableRow>
             ))}
