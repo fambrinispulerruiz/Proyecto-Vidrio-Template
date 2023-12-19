@@ -76,9 +76,9 @@ const NuevoFormulario = () => {
         });
 
         const data = await response.json();
-        console.log(data)
-        // Set the obtained data to the 'rows' state
-        setRows(data);
+        const sortedData = data.sort((a: { id: number }, b: { id: number }) => a.id - b.id);
+
+        setRows(sortedData);
       } catch (error) {
         console.error("Error al realizar la solicitud:", error);
       }

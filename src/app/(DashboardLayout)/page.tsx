@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button, Dialog, Stack,
   TextField, DialogTitle, DialogContent, DialogActions, Grid, Box,
@@ -18,11 +18,63 @@ import ProductPerformance from '@/app/(DashboardLayout)/components/dashboard/Pro
 import BaseCard from '@/app/(DashboardLayout)/components/shared/BaseCard';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { red } from '@mui/material/colors';
+import { ChangeEvent } from 'react';
+import { SelectChangeEvent } from '@mui/material/Select';
+import moment from 'moment';
+
+
+interface OrdenDeTrabajo {
+  id: number;
+  nombreAsegurado: string;
+  patente: string;
+  estado: string;
+  propio: string;
+  aseguradora: string;
+  fecha: string;
+  telefonoAsegurado: string;
+  vidrio: {
+    title: string;
+  };
+}
+
+interface Vidrio {
+  activo: boolean;
+  antena: string;
+  codigo: string;
+  id: number;
+  modelo: {
+    title: string;
+  };
+  nombre: string;
+  precio: number;
+  sensor: string;
+  tipoVidrio: string;
+  version: number;
+}
 
 
 const Dashboard = () => {
 
   const [openModal, setOpenModal] = useState(false);
+  const [vidrios, setSelect] = useState<Vidrio[]>([]);
+  const [isChecked, setIsChecked] = useState(false);
+  const [fecha, setFecha] = useState('');
+  const [hora, setHora] = useState('');
+  const [formData, setFormData] = useState({
+    id: '',
+    nombreAsegurado: '',
+    patente: '',
+    estado: '',
+    propio: '',
+    nroSiniestro: '',
+    aseguradora: '',
+    fecha: '',
+    orden: '',
+    telefonoAsegurado: '',
+    vidrio_id: '',
+    observaciones: '',
+    activo: ''
+  });
 
   const handleOpenModal = () => {
     setOpenModal(true);
@@ -30,6 +82,98 @@ const Dashboard = () => {
 
   const handleCloseModal = () => {
     setOpenModal(false);
+  };
+
+  useEffect(() => {
+    // This function will be called when the component mounts
+    const fetchData = async () => {
+      try {
+        const username = 'sven';
+        const password = 'pass';
+        const authHeader = 'Basic ' + btoa(username + ':' + password);
+
+        const response = await fetch("http://localhost:8080/restful/services/simple.Vidrios/actions/verVidrios/invoke", {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json;profile="urn:org.apache.isis"',
+            'Authorization': authHeader,
+            'accept': 'application/json;profile=urn:org.apache.isis/v2;suppress=all'
+          },
+        });
+
+        const data = await response.json();
+        console.log(data)
+        // Set the obtained data to the 'rows' state
+        setSelect(data);
+
+      } catch (error) {
+        console.error("Error al realizar la solicitud:", error);
+      }
+    };
+
+    // Call the fetchData function
+    fetchData();
+  }, []);
+
+  const handleFormChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>) => {
+    if ('target' in event) {
+      const { name, value } = event.target as HTMLInputElement | HTMLTextAreaElement;
+      console.log(`TextField Change - name: ${name}, value: ${value}`);
+      setFormData((prevData) => ({
+        ...prevData,
+        [name || '']: value,
+      }));
+    } else {
+      const selectedValue = (event as SelectChangeEvent<string>).target?.value || '';
+      console.log(`Select Change - selectedValue: ${selectedValue}`);
+      setFormData((prevData) => ({
+        ...prevData,
+        tipoEmpresa: selectedValue,
+      }));
+    }
+  };
+
+  const handleFormSubmit = async () => {
+    try {
+      const username = 'sven';
+      const password = 'pass';
+      const authHeader = 'Basic ' + btoa(username + ':' + password);
+
+      const fechaHora = `${fecha} ${hora}:00`;
+
+      const response = await fetch(
+        `http://localhost:8080/restful/objects/vidrios.Vidrio/${formData.vidrio_id}/actions/agregarOrden/invoke`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json;profile="urn:org.apache.isis"',
+            'Authorization': authHeader,
+            'accept': 'application/json;profile=urn:org.apache.isis/v2;suppress=all',
+          },
+          body: JSON.stringify({
+            nombreAsegurado: { value: formData.nombreAsegurado },
+            patente: { value: formData.patente },
+            estado: { value: formData.estado },
+            propio: { value: formData.propio },
+            nroSiniestro: { value: formData.nroSiniestro },
+            aseguradora: { value: formData.aseguradora },
+            fecha: { value: fechaHora },
+            orden: { value: isChecked ? "Si" : "No" },
+            telefonoAsegurado: { value: formData.telefonoAsegurado },
+            observaciones: { value: formData.observaciones },
+          }),
+        }
+      );
+
+      // Recarga la página después de enviar los datos
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        console.error('Error al enviar datos a la base de datos.');
+      }
+    } catch (error) {
+      console.error('Error al realizar la solicitud:', error);
+    }
   };
 
   const handleExportToPDF = () => {
@@ -61,6 +205,32 @@ const Dashboard = () => {
   };
 
 
+  const aseguradorasOptions = [
+    { id: 'NO_POSEE', nombre: 'No posee' },
+    { id: 'ALLIANZ', nombre: 'Allianz' },
+    { id: 'SANCOR_SEGUROS', nombre: 'Sancor Seguros' },
+    { id: 'LA_CAJA_SEGUROS', nombre: 'La Caja Seguros' },
+    { id: 'MAPFRE', nombre: 'Mapfre' },
+    { id: 'ZURICH', nombre: 'Zurich' },
+    { id: 'PROVINCIA_SEGUROS', nombre: 'Provincia Seguros' },
+    { id: 'QBE_SEGUROS_LA_BUENOS_AIRES', nombre: 'QBE Seguros La Buenos Aires' },
+    { id: 'RIO_URUGUAY_SEGUROS', nombre: 'Río Uruguay Seguros' },
+    { id: 'FEDERACION_PATRONAL', nombre: 'Federación Patronal' },
+    { id: 'SAN_CRISTOBAL_SEGUROS', nombre: 'San Cristóbal Seguros' },
+  ];
+
+  const handleCheckboxChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setIsChecked(event.target.checked);
+  };
+
+  const handleFechaChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setFecha(event.target.value);
+  };
+  
+  const handleHoraChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setHora(event.target.value);
+  };
+
   return (
     <PageContainer title="Dashboard" description="this is Dashboard">
       <Box mt={3}>
@@ -80,117 +250,147 @@ const Dashboard = () => {
                 <DialogTitle>Agregar Orden</DialogTitle>
                 <DialogContent sx={{ width: '600px', textAlign: 'center' }}>
                   <Grid item xs={12} lg={12}>
-                    <BaseCard title="Complete el Formulario de la Orden">
+                    <BaseCard title="Complete los Datos de la Orden">
                       <>
                         <Stack spacing={3}>
-                          {/* Selector de Modelo */}
-                          <FormControl fullWidth>
-                            <InputLabel id="modelo-label">Modelo</InputLabel>
-                            <Select
-                              labelId="modelo-label"
-                              id="modelo"
-                              label="Modelo"
-                            >
-                              <MenuItem value="hilux">Hilux (Toyota)</MenuItem>
-                              <MenuItem value="accord">Accord (Honda)</MenuItem>
-                              <MenuItem value="3-series">3 Series (BMW)</MenuItem>
-                              <MenuItem value="camry">Camry (Toyota)</MenuItem>
-                              <MenuItem value="civic">Civic (Honda)</MenuItem>
-                              {/* Agrega más opciones según sea necesario */}
-                            </Select>
-                          </FormControl>
 
                           {/* Selector de Vidrio */}
                           <FormControl fullWidth>
-                            <InputLabel id="vidrio-label">Vidrio</InputLabel>
+                            <InputLabel id="vidrio-label">Vidrio a colocar</InputLabel>
                             <Select
                               labelId="vidrio-label"
                               id="vidrio"
+                              name="vidrio_id"
                               label="Vidrio"
+                              value={formData.vidrio_id}
+                              onChange={(event) =>
+                                setFormData({ ...formData, vidrio_id: event.target.value })
+                              }
                             >
-                              <MenuItem value="parabrisas">Parabrisas</MenuItem>
-                              <MenuItem value="luneta">Luneta</MenuItem>
-                              <MenuItem value="ventana_delantera">Ventana Delantera</MenuItem>
-                              <MenuItem value="ventana_trasera">Ventana Trasera</MenuItem>
-                              <MenuItem value="ventana_lateral">Ventana Lateral</MenuItem>
-                              {/* Agrega más opciones según sea necesario */}
+                              {vidrios.map((vidrio) => (
+                                <MenuItem key={vidrio.id} value={vidrio.id}>
+                                  {vidrio.nombre + " (" + vidrio.modelo.title + ")"}
+                                </MenuItem>
+                              ))}
                             </Select>
                           </FormControl>
 
                           {/* Campo de Fecha */}
                           <TextField
                             id="fecha"
-                            label="Fecha"
+                            label="Fecha de realización"
                             type="date"
+                            name="fecha"
                             variant="outlined"
                             fullWidth
+                            value={fecha}
+                            onChange={handleFechaChange}
+                          />
+
+                          {/* Input para la hora */}
+                          <TextField
+                            id="hora"
+                            label="Hora"
+                            type="time"
+                            variant="outlined"
+                            fullWidth
+                            value={hora}
+                            onChange={handleHoraChange}
                           />
 
                           {/* Campo de Nombre Asegurado */}
                           <TextField
-                            id="nombre-asegurado"
-                            label="Nombre Asegurado"
+                            id="nombreAsegurado"
+                            label="Nombre del Asegurado"
+                            name="nombreAsegurado"
                             variant="outlined"
                             fullWidth
+                            value={formData.nombreAsegurado}
+                            onChange={handleFormChange}
                           />
 
                           {/* Campo de Teléfono Asegurado */}
                           <TextField
-                            id="telefono-asegurado"
-                            label="Teléfono Asegurado"
+                            id="telefonoAsegurado"
+                            label="Teléfono del Asegurado"
+                            name="telefonoAsegurado"
                             variant="outlined"
                             fullWidth
+                            value={formData.telefonoAsegurado}
+                            onChange={handleFormChange}
                           />
 
                           {/* Selector de Aseguradora */}
                           <FormControl fullWidth>
                             <InputLabel id="aseguradora-label">Aseguradora</InputLabel>
                             <Select
-                              labelId="aseguradora-label"
+                              labelId="aseguradora"
                               id="aseguradora"
                               label="Aseguradora"
+                              name="aseguradora"
+                              value={formData.aseguradora}
+                              onChange={(event) =>
+                                setFormData({ ...formData, aseguradora: event.target.value })
+                              }
                             >
-                              <MenuItem value="zurich">Zurich</MenuItem>
-                              <MenuItem value="federacion_patronal">Federación Patronal</MenuItem>
-                              <MenuItem value="la_segunda">La Segunda</MenuItem>
-                              <MenuItem value="sancor">Sancor</MenuItem>
-                              <MenuItem value="mapfre">MAPFRE</MenuItem>
-                              {/* Agrega más opciones según sea necesario */}
+                              {aseguradorasOptions.map((option) => (
+                                <MenuItem key={option.id} value={option.id}>
+                                  {option.nombre}
+                                </MenuItem>
+                              ))}
                             </Select>
                           </FormControl>
 
                           {/* Campo de Nro Siniestro */}
                           <TextField
-                            id="nro-siniestro"
+                            id="nroSiniestro"
                             label="Nro Siniestro"
+                            name="nroSiniestro"
                             variant="outlined"
+                            type="number"
+                            inputProps={{ min: 0, step: 'any' }}
                             fullWidth
+                            value={formData.nroSiniestro}
+                            onChange={handleFormChange}
                           />
 
                           {/* Checkbox de Orden */}
                           <FormControlLabel
-                            control={<Checkbox />}
-                            label="Orden"
+                            control={
+                              <Checkbox
+                                checked={isChecked}
+                                onChange={handleCheckboxChange}
+                              />
+                            }
+                            label="¿Trae orden del seguro?"
                           />
 
                           {/* Campo de Patente */}
                           <TextField
                             id="patente"
                             label="Patente"
+                            name="patente"
                             variant="outlined"
                             fullWidth
+                            value={formData.patente}
+                            onChange={handleFormChange}
                           />
 
                           {/* Selector de Propio */}
                           <FormControl fullWidth>
-                            <InputLabel id="propio-label">Propio</InputLabel>
+                            <InputLabel id="propio-label">Vehiculo</InputLabel>
                             <Select
                               labelId="propio-label"
                               id="propio"
                               label="Propio"
+                              name="propio"
+                              variant="outlined"
+                              fullWidth
+                              value={formData.propio}
+                              onChange={handleFormChange}
                             >
-                              <MenuItem value="propio">Propio</MenuItem>
-                              <MenuItem value="laboral">Laboral</MenuItem>
+                              <MenuItem value="Propio">Propio</MenuItem>
+                              <MenuItem value="Laboral">Laboral</MenuItem>
                             </Select>
                           </FormControl>
 
@@ -201,27 +401,33 @@ const Dashboard = () => {
                             multiline
                             rows={4}
                             variant="outlined"
+                            name="observaciones"
                             fullWidth
+                            value={formData.observaciones}
+                            onChange={handleFormChange}
                           />
 
                           {/* Selector de Estado */}
                           <FormControl fullWidth>
-                            <InputLabel id="estado-label">Estado</InputLabel>
+                            <InputLabel id="estado-label">Estado de la Orden</InputLabel>
                             <Select
                               labelId="estado-label"
                               id="estado"
                               label="Estado"
+                              name="estado"
+                              value={formData.estado}
+                              onChange={handleFormChange}
                             >
-                              <MenuItem value="estado1">Sin Atender</MenuItem>
-                              <MenuItem value="estado2">Atendido</MenuItem>
-                              <MenuItem value="estado2">Finalizado y Entregado</MenuItem>
+                              <MenuItem value="Sin_Atender">Sin Atender</MenuItem>
+                              <MenuItem value="Atendido">Atendido</MenuItem>
+                              <MenuItem value="Finalizado_y_Entregado">Finalizado y Entregado</MenuItem>
                               {/* Agrega más opciones según sea necesario */}
                             </Select>
                           </FormControl>
                         </Stack>
                         <br />
-                        <Button>
-                          Cargar
+                        <Button onClick={handleFormSubmit}>
+                          Cargar Orden
                         </Button>
                       </>
                     </BaseCard>
