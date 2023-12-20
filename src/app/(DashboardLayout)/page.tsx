@@ -20,7 +20,9 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { red } from '@mui/material/colors';
 import { ChangeEvent } from 'react';
 import { SelectChangeEvent } from '@mui/material/Select';
-import moment from 'moment';
+import { PDFViewer, Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
+import { saveAs } from 'file-saver';
+
 
 
 interface OrdenDeTrabajo {
@@ -176,32 +178,179 @@ const Dashboard = () => {
     }
   };
 
-  const handleExportToPDF = () => {
-    // Agrega la URL específica para exportar a PDF
-    const pdfExportURL = 'tu_url_para_exportar_a_pdf';
+  const styles = StyleSheet.create({
+    section: {
+      margin: 10,
+      padding: 10,
+      flexGrow: 1,
+    },
+    page: {
+      flexDirection: 'column',
+      backgroundColor: '#E4E4E4',
+      padding: 20,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 20,
+    },
+    headerLeft: {
+      flexDirection: 'column',
+      width: '40%',
+    },
+    headerRight: {
+      flexDirection: 'column',
+      width: '40%',
+      textAlign: 'right',
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 10,
+    },
+    table: {
+      display: 'flex',
+      flexDirection: 'column',
+      width: 'auto',
+      marginBottom: 20,
+    },
+    rowH: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      alignItems: 'center',
+      height: 30, // Ajusta la altura según tus necesidades
+      backgroundColor: '#2249839e'
+    },
+    rowC: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      alignItems: 'center',
+      height: 30, // Ajusta la altura según tus necesidades
+    },
+    headerCell: {
+      color: '#ffffff',
+    },
+    cell: {
+      margin: 'auto',
+      fontSize: 10,
+      padding: 5,
+      textAlign: 'center', // Centra el texto en las celdas
+    },
+    date: {
+      fontSize: 12,
+      color: '#555',
+    },
+  });
 
-    // Realiza el fetch vacío para iniciar la exportación
-    fetch(pdfExportURL, {
-      method: 'GET', // O el método HTTP que corresponda
-      // Agrega cualquier encabezado o configuración necesario para tu API
-      headers: {
-        'Content-Type': 'application/pdf',
-        // Puedes agregar más encabezados según tus requisitos
-      },
-    })
-      .then(response => {
-        // Verifica el estado de la respuesta
-        if (!response.ok) {
-          throw new Error('Error al exportar a PDF');
-        }
-        // Puedes manejar la respuesta aquí si es necesario
-        // Por ejemplo, abrir el PDF en una nueva ventana/tab
-        window.open(pdfExportURL, '_blank');
-      })
-      .catch(error => {
-        console.error('Error:', error.message);
-        // Maneja los errores según tus necesidades
+  const MyDocument = ({ data }: { data: OrdenDeTrabajo[] }) => {
+    const currentDate = new Date();
+    const formattedDate = `${currentDate.getDate()}/${currentDate.getMonth() + 1}/${currentDate.getFullYear()}`;
+
+    return (
+      <Document>
+        <Page size="A4" style={styles.page}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <Text style={{ fontSize: 14, marginBottom: 5 }}>El Emporio de el Vidrio</Text>
+              <Text style={{ fontSize: 10, color: '#555' }}>Dirección: Pasaje Sayi 665</Text>
+            </View>
+            <View style={styles.headerRight}>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>Registro de Ordenes de Trabajo</Text>
+              <Text style={{ fontSize: 12, color: '#555' }}>Fecha: {formattedDate}</Text>
+            </View>
+          </View>
+
+          {/* Title */}
+          <Text style={styles.title}>Registro de Ordenes de Trabajo</Text>
+
+          {/* Table */}
+          <View style={styles.table}>
+            {/* Encabezado de la tabla */}
+            <View style={styles.rowH}>
+              <Text style={[styles.cell, styles.headerCell, { width: '15%' }]}>ID</Text>
+              <Text style={[styles.cell, styles.headerCell, { width: '15%' }]}>Fecha</Text>
+              <Text style={[styles.cell, styles.headerCell, { width: '15%' }]}>Hora</Text>
+              <Text style={[styles.cell, styles.headerCell, { width: '20%' }]}>Nombre</Text>
+              <Text style={[styles.cell, styles.headerCell, { width: '20%' }]}>Telefono</Text>
+              <Text style={[styles.cell, styles.headerCell, { width: '20%' }]}>Vidrio</Text>
+              <Text style={[styles.cell, styles.headerCell, { width: '15%' }]}>Patente</Text>
+              <Text style={[styles.cell, styles.headerCell, { width: '15%' }]}>Vehiculo</Text>
+              <Text style={[styles.cell, styles.headerCell, { width: '20%' }]}>Estado</Text>
+            </View>
+
+            {data.map((item) => {
+
+              const fecha = new Date(item.fecha);
+
+              // Obtiene los componentes de fecha y hora
+              const fechaFormateada = `${fecha.getDate()}/${fecha.getMonth() + 1}/${fecha.getFullYear()}`;
+              const horaFormateada = `${fecha.getHours()}:${fecha.getMinutes()}`;
+
+              return (
+                <View key={item.id} style={styles.rowC}>
+                  <Text style={[styles.cell, { width: '15%' }]}>{item.id}</Text>
+                  <Text style={[styles.cell, { width: '15%' }]}>{fechaFormateada}</Text>
+                  <Text style={[styles.cell, { width: '15%' }]}>{horaFormateada}</Text>
+                  <Text style={[styles.cell, { width: '20%' }]}>{item.nombreAsegurado}</Text>
+                  <Text style={[styles.cell, { width: '20%' }]}>{item.telefonoAsegurado}</Text>
+                  <Text style={[styles.cell, { width: '20%' }]}>{item.vidrio.title}</Text>
+                  <Text style={[styles.cell, { width: '15%' }]}>{item.patente}</Text>
+                  <Text style={[styles.cell, { width: '15%' }]}>{item.propio}</Text>
+                  <Text style={[styles.cell, { width: '20%' }]}>{item.estado}</Text>
+                  {/* Agrega más celdas según tus necesidades */}
+                </View>
+              )
+            })}
+          </View>
+        </Page>
+      </Document>
+    )
+  };
+
+  const generatePDF = async (data: OrdenDeTrabajo[]) => {
+    // Renderiza el componente React a un Blob
+    const pdfBlob = await pdf(<MyDocument data={data} />);
+
+    // Obtiene el Blob del objeto pdfBlob
+    const blob = await pdfBlob.toBlob();
+
+    // Ahora, puedes usar saveAs con el Blob
+    saveAs(blob, 'Reporte de Ordenes - El Emporio del Vidrio.pdf');
+  };
+
+
+  const handleExportToPDF = async () => {
+    try {
+      const username = 'sven';
+      const password = 'pass';
+      const authHeader = 'Basic ' + btoa(username + ':' + password);
+
+      const response = await fetch("http://localhost:8080/restful/services/simple.OrdenDeTrabajos/actions/verOrdenesDeTrabajo/invoke", {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json;profile="urn:org.apache.isis"',
+          'Authorization': authHeader,
+          'accept': 'application/json;profile=urn:org.apache.isis/v2;suppress=all'
+        },
       });
+
+      const data = await response.json();
+
+      const sortedData = data.sort((a: { estado: string }, b: { estado: string }) => {
+        const estadoOrder: { [key: string]: number } = {
+          'Sin Atender': 1,
+          'Atendido': 2,
+          'Finalizado Y Entregado': 3,
+        };
+        return estadoOrder[a.estado] - estadoOrder[b.estado];
+      });
+
+      generatePDF(sortedData);
+
+    } catch (error) {
+      console.error("Error al realizar la solicitud:", error);
+    }
   };
 
 
@@ -226,7 +375,7 @@ const Dashboard = () => {
   const handleFechaChange = (event: ChangeEvent<HTMLInputElement>) => {
     setFecha(event.target.value);
   };
-  
+
   const handleHoraChange = (event: ChangeEvent<HTMLInputElement>) => {
     setHora(event.target.value);
   };

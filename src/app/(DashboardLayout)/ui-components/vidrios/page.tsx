@@ -23,7 +23,8 @@ import BaseCard from '@/app/(DashboardLayout)/components/shared/BaseCard';
 import { ChangeEvent } from 'react';
 import { SelectChangeEvent } from '@mui/material/Select';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-
+import { PDFViewer, Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
+import { saveAs } from 'file-saver';
 interface Vidrio {
   activo: boolean;
   antena: string;
@@ -140,13 +141,6 @@ const NuevoFormulario = () => {
     setOpenEditModal(false);
   };
 
-  const handleExportToPDF = () => {
-    // Implementa la lógica de exportación a PDF
-    // ...
-
-    // Ejemplo de apertura de la URL en una nueva ventana/tab
-    // window.open(pdfExportURL, '_blank');
-  };
 
   const handleFormChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>) => {
     if ('target' in event) {
@@ -350,6 +344,171 @@ const NuevoFormulario = () => {
     { id: 'No', nombre: 'No' },
     // Agrega más empresas según sea necesario
   ];
+
+   //------------------------------------------------------------------------------------
+
+   const styles = StyleSheet.create({
+    section: {
+      margin: 10,
+      padding: 10,
+      flexGrow: 1,
+    },
+    page: {
+      flexDirection: 'column',
+      backgroundColor: '#E4E4E4',
+      padding: 20,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 20,
+    },
+    headerLeft: {
+      flexDirection: 'column',
+      width: '40%',
+    },
+    headerRight: {
+      flexDirection: 'column',
+      width: '40%',
+      textAlign: 'right',
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 10,
+    },
+    table: {
+      display: 'flex',
+      flexDirection: 'column',
+      width: 'auto',
+      marginBottom: 20,
+    },
+    rowH: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      alignItems: 'center',
+      height: 30, // Ajusta la altura según tus necesidades
+      backgroundColor: '#2249839e'
+    },
+    rowC: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      alignItems: 'center',
+      height: 30, // Ajusta la altura según tus necesidades
+    },
+    headerCell: {
+      color: '#ffffff',
+    },
+    cell: {
+      margin: 'auto',
+      fontSize: 10,
+      padding: 5,
+      textAlign: 'center', // Centra el texto en las celdas
+    },
+    date: {
+      fontSize: 12,
+      color: '#555',
+    },
+  });
+
+  const MyDocument = ({ data }: { data: Vidrio[] }) => {
+    const currentDate = new Date();
+    const formattedDate = `${currentDate.getDate()}/${currentDate.getMonth() + 1}/${currentDate.getFullYear()}`;
+
+    return (
+      <Document>
+        <Page size="A4" style={styles.page}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <Text style={{ fontSize: 14, marginBottom: 5 }}>El Emporio de el Vidrio</Text>
+              <Text style={{ fontSize: 10, color: '#555' }}>Dirección: Pasaje Sayi 665</Text>
+            </View>
+            <View style={styles.headerRight}>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>Registro de Vidrios Disponibles</Text>
+              <Text style={{ fontSize: 12, color: '#555' }}>Fecha: {formattedDate}</Text>
+            </View>
+          </View>
+
+          {/* Title */}
+          <Text style={styles.title}>Registro de Vidrios Disponibles</Text>
+
+          {/* Table */}
+          <View style={styles.table}>
+            {/* Encabezado de la tabla */}
+            <View style={styles.rowH}>
+
+              <Text style={[styles.cell, styles.headerCell, { width: '15%' }]}>ID</Text>
+              <Text style={[styles.cell, styles.headerCell, { width: '20%' }]}>Nombre</Text>
+              <Text style={[styles.cell, styles.headerCell, { width: '30%' }]}>Modelo</Text>
+              <Text style={[styles.cell, styles.headerCell, { width: '20%' }]}>Codigo</Text>
+              <Text style={[styles.cell, styles.headerCell, { width: '20%' }]}>Precio</Text>
+              <Text style={[styles.cell, styles.headerCell, { width: '20%' }]}>Tipo Vidrio</Text>
+              <Text style={[styles.cell, styles.headerCell, { width: '20%' }]}>Atena</Text>
+              <Text style={[styles.cell, styles.headerCell, { width: '20%' }]}>Sensor</Text>
+            </View>
+
+            {data.map((item) => {
+
+              return (
+                <View key={item.id} style={styles.rowC}>
+                  <Text style={[styles.cell, { width: '15%' }]}>{item.id}</Text>
+                  <Text style={[styles.cell, { width: '20%' }]}>{item.nombre}</Text>
+                  <Text style={[styles.cell, { width: '15%' }]}>{item.modelo.title}</Text>
+                  <Text style={[styles.cell, { width: '20%' }]}>{item.codigo}</Text>
+                  <Text style={[styles.cell, { width: '20%' }]}>{item.precio}</Text>
+                  <Text style={[styles.cell, { width: '20%' }]}>{item.tipoVidrio}</Text>
+                  <Text style={[styles.cell, { width: '20%' }]}>{item.antena}</Text>
+                  <Text style={[styles.cell, { width: '20%' }]}>{item.sensor}</Text>
+
+                  {/* Agrega más celdas según tus necesidades */}
+                </View>
+              )
+            })}
+          </View>
+        </Page>
+      </Document>
+    )
+  };
+
+  const generatePDF = async (data: Vidrio[]) => {
+    // Renderiza el componente React a un Blob
+    const pdfBlob = await pdf(<MyDocument data={data} />);
+
+    // Obtiene el Blob del objeto pdfBlob
+    const blob = await pdfBlob.toBlob();
+
+    // Ahora, puedes usar saveAs con el Blob
+    saveAs(blob, 'Reporte de Vidrios Disponibles - El Emporio del Vidrio.pdf');
+  };
+
+
+  const handleExportToPDF = async () => {
+    try {
+      const username = 'sven';
+      const password = 'pass';
+      const authHeader = 'Basic ' + btoa(username + ':' + password);
+
+      const response = await fetch("http://localhost:8080/restful/services/simple.Vidrios/actions/verVidrios/invoke", {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json;profile="urn:org.apache.isis"',
+          'Authorization': authHeader,
+          'accept': 'application/json;profile=urn:org.apache.isis/v2;suppress=all'
+        },
+      });
+
+      const data = await response.json();
+
+      generatePDF(data);
+
+    } catch (error) {
+      console.error("Error al realizar la solicitud:", error);
+    }
+  };
+
+
+  //------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
   return (
